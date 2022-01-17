@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Wavelet-based · TimeseriesSurrogates.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><script src="../../../copy.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="https://fonts.googleapis.com/css?family=Montserrat|Source+Code+Pro&amp;display=swap" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">TimeseriesSurrogates.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Documentation</a></li><li><a class="tocitem" href="../../man/whatisasurrogate/">What is a surrogate?</a></li><li><span class="tocitem">Example applications</span><ul><li><a class="tocitem" href="../randomshuffle/">Shuffle-based</a></li><li><a class="tocitem" href="../fourier_surrogates/">Fourier-based</a></li><li><a class="tocitem" href="../amplitude_adjusted/">Amplitude-adjusted FT</a></li><li><a class="tocitem" href="../pps/">Pseudo-periodic</a></li><li class="is-active"><a class="tocitem" href>Wavelet-based</a><ul class="internal"><li><a class="tocitem" href="#IAAFT-shuffling-detail-coefficients"><span>IAAFT shuffling detail coefficients</span></a></li><li><a class="tocitem" href="#Other-shuffling-methods"><span>Other shuffling methods</span></a></li></ul></li><li><a class="tocitem" href="../ppts/">Pseudo-periodic twin</a></li><li><a class="tocitem" href>Wavelet-based</a></li><li><a class="tocitem" href="../multidim/">Multidimensional surrogates</a></li><li><a class="tocitem" href="../../collections/irregular_surrogates/">Surrogates for irregular timeseries</a></li><li><a class="tocitem" href="../../collections/nonstationary_surrogates/">Surrogates for nonstationary timeseries</a></li></ul></li><li><a class="tocitem" href="../../man/exampleprocesses/">Utility systems</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Example applications</a></li><li class="is-active"><a href>Wavelet-based</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Wavelet-based</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaDynamics/TimeseriesSurrogates.jl/blob/master/docs/src/methods/wls.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Wavelet-surrogates"><a class="docs-heading-anchor" href="#Wavelet-surrogates">Wavelet surrogates</a><a id="Wavelet-surrogates-1"></a><a class="docs-heading-anchor-permalink" href="#Wavelet-surrogates" title="Permalink"></a></h1><p>Wavelet surrogates are constructed by taking the maximal overlap  discrete wavelet transform (MODWT) of the signal, shuffling detail  coefficients across dyadic scales, then inverting the transform to  obtain the surrogate. </p><h2 id="IAAFT-shuffling-detail-coefficients"><a class="docs-heading-anchor" href="#IAAFT-shuffling-detail-coefficients">IAAFT shuffling detail coefficients</a><a id="IAAFT-shuffling-detail-coefficients-1"></a><a class="docs-heading-anchor-permalink" href="#IAAFT-shuffling-detail-coefficients" title="Permalink"></a></h2><p>In <a href="https://journals.aps.org/pre/abstract/10.1103/PhysRevE.73.036707">Keylock (2006)</a>,  IAAAFT shuffling is used, yielding surrogates that preserve the local mean and  variance of the original signal, but randomizes nonlinear properties of the signal. This also preserves nonstationarities in the signal.</p><pre><code class="language- hljs">using TimeseriesSurrogates, Random
+Random.seed!(5040)
+n = 500
+σ = 30
+x = cumsum(randn(n)) .+ 
+    [20*sin(2π/30*i) for i = 1:n] .+ 
+    [20*cos(2π/90*i) for i = 1:n] .+
+    [50*sin(2π/2*i + π) for i = 1:n] .+ 
+    σ .* rand(n).^2 .+ 
+    [0.5*t for t = 1:n];
+
+# Rescale surrogate back to original values
+method = WLS(IAAFT(), true)
+s = surrogate(x, method);
+p = surroplot(x, s)</code></pre><p>Even without rescaling, IAAFT shuffling also yields surrogates with local properties  very similar to the original signal.</p><pre><code class="language- hljs">using TimeseriesSurrogates, Random
+Random.seed!(5040)
+n = 500
+σ = 30
+x = cumsum(randn(n)) .+ 
+    [20*sin(2π/30*i) for i = 1:n] .+ 
+    [20*cos(2π/90*i) for i = 1:n] .+
+    [50*sin(2π/2*i + π) for i = 1:n] .+ 
+    σ .* rand(n).^2 .+ 
+    [0.5*t for t = 1:n];
+
+# Don&#39;t rescale back to original time series.
+method = WLS(IAAFT(), false)
+s = surrogate(x, method);
+p = surroplot(x, s)</code></pre><h2 id="Other-shuffling-methods"><a class="docs-heading-anchor" href="#Other-shuffling-methods">Other shuffling methods</a><a id="Other-shuffling-methods-1"></a><a class="docs-heading-anchor-permalink" href="#Other-shuffling-methods" title="Permalink"></a></h2><p>The choice of coefficient shuffling method determines how well and  which properties of the original signal are retained by the surrogates.  There might be use cases where surrogates do not need to perfectly preserve the  autocorrelation of the original signal, so additional shuffling  methods are provided for convenience.</p><p>Using random shuffling of the detail coefficients does not preserve the  autocorrelation structure of the original signal. </p><pre><code class="language- hljs">using TimeseriesSurrogates, Random
+Random.seed!(5040)
+n = 500
+σ = 30
+x = cumsum(randn(n)) .+ 
+    [20*sin(2π/30*i) for i = 1:n] .+ 
+    [20*cos(2π/90*i) for i = 1:n] .+
+    [50*sin(2π/2*i + π) for i = 1:n] .+ 
+    σ .* rand(n).^2 .+ 
+    [0.5*t for t = 1:n];
+
+method = WLS(RandomShuffle())
+s = surrogate(x, method);
+p = surroplot(x, s)</code></pre><p>Block shuffling the detail coefficients better preserve local properties because the shuffling is not completely random, but still does not  preserve the autocorrelation of the original signal.</p><pre><code class="language- hljs">using TimeseriesSurrogates, Random
+Random.seed!(5040)
+n = 500
+σ = 30
+x = cumsum(randn(n)) .+ 
+    [20*sin(2π/30*i) for i = 1:n] .+ 
+    [20*cos(2π/90*i) for i = 1:n] .+
+    [50*sin(2π/2*i + π) for i = 1:n] .+ 
+    σ .* rand(n).^2 .+ 
+    [0.5*t for t = 1:n];
+
+s = surrogate(x, WLS(BlockShuffle(10)));
+p = surroplot(x, s)</code></pre><p>Random Fourier phase shuffling the detail coefficients does a decent job at preserving the autocorrelation.</p><pre><code class="language- hljs">using TimeseriesSurrogates, Random
+Random.seed!(5040)
+n = 500
+σ = 30
+x = cumsum(randn(n)) .+ 
+    [20*sin(2π/30*i) for i = 1:n] .+ 
+    [20*cos(2π/90*i) for i = 1:n] .+
+    [50*sin(2π/2*i + π) for i = 1:n] .+ 
+    σ .* rand(n).^2 .+ 
+    [0.5*t for t = 1:n];
+
+s = surrogate(x, WLS(RandomFourier()));
+surroplot(x, s)</code></pre><p>To generate surrogates that preserve linear properties of the original signal, AAFT or IAAFT shuffling is required.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../pps/">« Pseudo-periodic</a><a class="docs-footer-nextpage" href="../ppts/">Pseudo-periodic twin »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.12 on <span class="colophon-date" title="Monday 17 January 2022 23:08">Monday 17 January 2022</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

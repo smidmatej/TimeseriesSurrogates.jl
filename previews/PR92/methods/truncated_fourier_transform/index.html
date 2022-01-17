@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Truncated FT/AAFT · TimeseriesSurrogates.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><script src="../../../copy.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="https://fonts.googleapis.com/css?family=Montserrat|Source+Code+Pro&amp;display=swap" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">TimeseriesSurrogates.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Documentation</a></li><li><a class="tocitem" href="../../man/whatisasurrogate/">What is a surrogate?</a></li><li><span class="tocitem">Example applications</span><ul><li><a class="tocitem" href="../randomshuffle/">Shuffle-based</a></li><li><a class="tocitem" href="../fourier_surrogates/">Fourier-based</a></li><li><a class="tocitem" href="../amplitude_adjusted/">Amplitude-adjusted FT</a></li><li class="is-active"><a class="tocitem" href>Truncated FT/AAFT</a><ul class="internal"><li><a class="tocitem" href="#TFTS"><span>TFTS</span></a></li><li><a class="tocitem" href="#TAAFT"><span>TAAFT</span></a></li></ul></li><li><a class="tocitem" href="../pps/">Pseudo-periodic</a></li><li><a class="tocitem" href="../wls/">Wavelet-based</a></li><li><a class="tocitem" href="../ppts/">Pseudo-periodic twin</a></li><li><a class="tocitem" href="../wls/">Wavelet-based</a></li><li><a class="tocitem" href="../multidim/">Multidimensional surrogates</a></li><li><a class="tocitem" href="../irregular_surrogates/">Surrogates for irregular timeseries</a></li></ul></li><li><a class="tocitem" href="../../man/exampleprocesses/">Utility systems</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Example applications</a></li><li class="is-active"><a href>Truncated FT/AAFT</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Truncated FT/AAFT</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaDynamics/TimeseriesSurrogates.jl/blob/master/docs/src/methods/truncated_fourier_transform.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Truncated-FT/AAFT-surrogates"><a class="docs-heading-anchor" href="#Truncated-FT/AAFT-surrogates">Truncated FT/AAFT surrogates</a><a id="Truncated-FT/AAFT-surrogates-1"></a><a class="docs-heading-anchor-permalink" href="#Truncated-FT/AAFT-surrogates" title="Permalink"></a></h1><h2 id="TFTS"><a class="docs-heading-anchor" href="#TFTS">TFTS</a><a id="TFTS-1"></a><a class="docs-heading-anchor-permalink" href="#TFTS" title="Permalink"></a></h2><p>Truncated Fourier transform surrogates preserve some portion of the frequency spectrum of the original signal. Here, we randomize the 95% highest frequencies, while keeping the 5% lowermost frequencies intact.</p><pre><code class="language- hljs">using TimeseriesSurrogates
+n = 300
+a = 0.7
+A = 20
+σ = 15
+x = cumsum(randn(n)) .+ [(1 + a*i) .+ A*sin(2π/10*i) for i = 1:n] .+
+    [A^2*sin(2π/2*i + π) for i = 1:n] .+ σ .* rand(n).^2;
+
+
+fϵ = 0.05
+s_tfts = surrogate(x, TFTS(fϵ))
+surroplot(x, s_tfts)</code></pre><p>One may also choose to preserve the opposite end of the frequency spectrum. Below, we randomize the 20% lowermost frequencies, while keeping the 80% highest frequencies intact.</p><pre><code class="language- hljs">using TimeseriesSurrogates
+n = 300
+a = 0.7
+A = 20
+σ = 15
+x = cumsum(randn(n)) .+ [(1 + a*i) .+ A*sin(2π/10*i) for i = 1:n] .+
+    [A^2*sin(2π/2*i + π) for i = 1:n] .+ σ .* rand(n).^2;
+
+fϵ = -0.2
+s_tfts = surrogate(x, TFTS(fϵ))
+surroplot(x, s_tfts)</code></pre><h2 id="TAAFT"><a class="docs-heading-anchor" href="#TAAFT">TAAFT</a><a id="TAAFT-1"></a><a class="docs-heading-anchor-permalink" href="#TAAFT" title="Permalink"></a></h2><p>Truncated AAFT surrogates are similar to TFTS surrogates, but adds the extra step of rescaling back to the original values of the signal, so that the original signal and the surrogates consists of the same values.</p><pre><code class="language- hljs">using TimeseriesSurrogates
+n = 300
+a = 0.7
+A = 20
+σ = 15
+x = cumsum(randn(n)) .+ [(1 + a*i) .+ A*sin(2π/10*i) for i = 1:n] .+
+    [A^2*sin(2π/2*i + π) for i = 1:n] .+ σ .* rand(n).^2;
+
+
+fϵ = 0.05
+s_tfts = surrogate(x, TAAFT(fϵ))
+surroplot(x, s_tfts)</code></pre><pre><code class="language- hljs">using TimeseriesSurrogates
+n = 300
+a = 0.7
+A = 20
+σ = 15
+x = cumsum(randn(n)) .+ [(1 + a*i) .+ A*sin(2π/10*i) for i = 1:n] .+
+    [A^2*sin(2π/2*i + π) for i = 1:n] .+ σ .* rand(n).^2;
+
+fϵ = -0.2
+s_tfts = surrogate(x, TAAFT(fϵ))
+surroplot(x, s_tfts)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../amplitude_adjusted/">« Amplitude-adjusted FT</a><a class="docs-footer-nextpage" href="../pps/">Pseudo-periodic »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.12 on <span class="colophon-date" title="Monday 17 January 2022 21:02">Monday 17 January 2022</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
